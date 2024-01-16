@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifrando Mensajes con RSA y Python</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        #CIPHERTEXT{
+            color: #333;
+            background-color: #66ccff;
+            padding: 15px;
+            text-align: center;  
+        }
+
+        #ELEMENT {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        code {
+            background-color: #f8f8f8;
+            padding: 5px;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            color: #2e09ff;
+        }
+
+        pre {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+        }
+        
+
+
+
+
+
+
+        #ENCABEZADO{
+            background-color: #333;
+            padding: 20px;
+            text-align: center;
+            color: #f5f5f5
+        }
+
+
+
+
+
+
+
+
+
+
+
+        #pito {
+    margin-top: 60px; /* Ajusta esto según la altura de tu header para evitar que el contenido se solape con él */
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        h1 {
+            margin: 0;
+            color: #f5f5f5;
+
+        }
+
+        
+    </style>
+</head>
+<body>
+    <header id="ENCABEZADO">
+        <h1>Galim Galicia</h1>
+        <p>Diseño de Software y analisis de datos en masa</p>
+    </header>
+
+    <h1 id="CIPHERTEXT">Cifrado asimetrico de datos con python</h1>
+
+    <p id="ELEMENT">Estas buscando ponerle contraseña a tus documentos? no tienes que instalar aplicaciones, vamos a programarlo con python!...</p>
+
+    <p>antes de empezar, vamos a dar un repaso a lo que es la operacion XOR<p>
+    <p> XOR en informatica, es una operacion que toma como entrada dos bits, y retorna uno solo, de modo que si los dos bits son del mismo tipo, dara como resultado un bit positivo(1)
+y si los bits son distintos, producira un valor negativo representado por un 0 
+    </p>
+    <p>el diagrama se veria asi:</p>
+    <pre><code>
+        | A | B | A XOR B |
+        |---|---|---------|
+        | 0 | 0 |    0    |
+        | 0 | 1 |    1    |
+        | 1 | 0 |    1    |
+        | 1 | 1 |    0    |
+    </pre></code>
+    <p>justo como la ley de suma y resta que aprendimos en el kinder!</p>
+    <p>una vez repasado este concepto basico, vamos a ponernos manos a la obra.</p>
+    <p>para esto vamos a hacer uso de la libreria cryptography, que es una libreria built in de python</p>
+    <pre><code>
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa</code></pre>
+        <p>de las sentencias de importe:</p>
+        <ul>
+            <li>
+                serialization nos servira para facilitar la persistencia de datos y la comunicacion cliente-servidor.</li>
+            <li>Al utilizar default_backend estás indicando que deseas utilizar la implementación criptográfica predeterminada en tu sistema, esto permite al modulo escoger la forma mas conveniente de implementarse</li>
+            <li>RSA es el un tipo de algoritmo de cifrados asimetricos, no vale la pena profundizar  en esto, solo es la manera como se interpretaran matematicamente los datos</li>
+        </ul>
+        <p>generamos una clave privada  con el metodo generate_private_key()</p>
+        <pre><code>
+private_key = rsa.generate_private_key(
+     public_exponent=65537,MIME
+     key_size=2048,
+     backend=default_backend()
+            )</code></pre>
+        <p>donde:</p>
+        <ul>
+            <li>el argumento public_exponent, es el exponente publico usado en RSA, usaremos por convencion el valor 65537</li>
+            <li>key_size es el tamaño de la clave publica, un tamaño demasiado grande ofrece mayor seguridad, pero tambien puede realentizar la operacion de de RSA.
+                Si no estas seguro que numero debes usar, puedes basarte en el tamaño del archivo que vas a encriptar;
+                entre menor tamaño el archivo, mas bits puede tener la clave sin realentizarse demasiado, y viceversa.
+                recuerda tambien siempre usar potencias de 2 como valores.
+    
+                </li>
+            <li>de default_backend, ya habiamos mencionado que es la forma predeterminada de encriptacion del sistema</li>
+        </ul>
+        <p>despues crearemos una clave publica basandonos en la clave privada y la guardaremos en la variable public_key</p>
+        <pre><code>public_key = private_key.public_key()</code></pre>
+        <p>despues convertimos las claves a formato PEM. esto es basicamente convertir bits a formato ASCII para facilitar su legibilidad visualizacion y utilizacion, ya que recordemos que los protocolos de las capas desde la 7 a 2 del modelo  OSI no estan diseñadas para leer datos binarios en crudo, este formato funciona con el sistema de numeracion posicional base64</p>
+
+        <pre><code>
+# Creando objetos que convierten las claves a formato PEM
+pem_private_key = private_key.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.NoEncryption()
+            )
+        
+pem_public_key = public_key.public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            </code></pre>
+            <p>ahora simplemente guardamos las claves en un archivo:</p>
+            <pre><code>
+with open("private_key.pem", "wb") as private_key_file:
+    private_key_file.write(pem_private_key)
+            
+with open("public_key.pem", "wb") as public_key_file:
+    public_key_file.write(pem_public_key)</code></pre>
+            <p>listo!!, ya tenemos la clave publica y la clave privada, ahora vamos a hacer uso de ellas</p>
+            <p>abriremos otro archivo e importamos</p>
+            <pre><code>
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend</code></pre>
+                <p>hazmat significa hazardous material e indica que es informacion delicada, de aqui usaremos mas funciones utiles para nuestro codigo</p>
+                <p>abrimos los documentos donde anteriormente guardamos las claves, y leemos los datos</p>
+                <pre><code>
+# Cargar las claves desde archivos
+with open("private_key.pem", "rb") as private_key_file:
+    private_key = serialization.load_pem_private_key(
+        private_key_file.read(),
+        password=None,
+        backend=default_backend()
+                        )
+                    
+with open("public_key.pem", "rb") as public_key_file:
+    public_key = serialization.load_pem_public_key(
+        public_key_file.read(),
+        backend=default_backend()
+                        )</code></pre>
+                        <pre><code> 
+#Datos a cifrar
+mensaje = "¡Hola, esto es un mensaje secreto!".encode("utf-8)
+#aqui hicimos uso de otro metodo built-in, encode en complemento al parametro utf-8 nos permite convertir el mensaje a bytes, que tambien se puede hacer con una cadena de tipo  bytes >_o:
+mensaje = b"¡Hola, esto es un mensaje secreto!"
+                            </pre></code>
+                        <pre><code>
+# Cifrar con clave pública
+ciphertext = public_key.encrypt(
+    mensaje,
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+                                )
+                            )</code></pre>
+                            <p>como se puede ver, usaremos el esquema de pssdding OAEP junto con RSA para aumentar la seguridad.
+                                mgf=padding.MGF1(algorithm=hashes.SHA256()), indica el algoritmo de hash, para OAEP se utiliza SHA256
+                                y label, se utiliza para agregar informacion contextual, generalmente y en este caso en especifico, se dejara vacia.
+                            </p>
+                            <pre><code>
+# Descifrar con clave privada
+plaintext = private_key.decrypt(
+    ciphertext,
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+                                    )
+                                )
+                                </code></pre>
+                                <p>demostracion:</p>
+
+                                    <pre><code>
+print("Mensaje original:", mensaje)
+print("============================")
+print("mensaje encriptado", ciphertext)
+print("============================")
+print("Mensaje descifrado:", plaintext)
+                                </code></pre>
+                                <p>
+                                    salida:</p>
+                                <pre><code>
+Mensaje original: b'Hola, esto es un mensaje secreto'
+============================
+mensaje encriptado b'R\xe0\xb5\xd8\xd5T\x83S\xe3\x8cdL\xc3\xe9\xfa\x86Xk\x9845\xd7\xf7\xdcP\xff\xda\x9cH*\xaf\x9d\x13F\xe4"Q\xaa\xe7\t\xa7\xbd6)\xfe\xb2\xc9\xff\xecB\x0e\x8f\xbc}\xf5\xb0\x15\xbc*D\xb6\x8d`\x1b\xcd\xb3\x066\x0c\xb1%\xda\xb2\x89\x99\xfbw\x9eN\x9e^\xc7\xa2\xa0\xc8~J~I\xe53\x0b\xc7h^\x00\xdef\xf0\xaa\xb6(D\x0c\xf1\xfa\xd8n\x10\x83\xc4\xaf\xfb\x8a~>\x82|:\xba\xd3\x9e\xe8\xb1\xde@\xf3\xdb\xd4\xbd\xba\x8a&&\x04&\xab\xac\xb8\xe0#4\x97\x16\x86\x9b\xe2\xae\'\xfb\x8a\xc88\x8e\xfe\x1b\rj\xf1\xd89\xab\xb4\x1f\x07\x0f\x16\x920\x7f\xd6\xb5\xa5\xa1C\xf7rM\x7f\xdb\x8c\\\xdd\xb7g\xc4\xcc;\xfe\xcb\xe4@\xdd\xd9\x7f%\x03u*oic\xfe\xd4/\xaa>5\xedlV\xf4{n\x1a\x99\xdbf\x07\xf3o\xaa>5]\xe8\x86\xfc\xac9\xc2\xe5\xd2V\xca\x89\xd0`\xe7I\\\x8c\x1b\xc9X\xdba\x89\x8b\xd9&\x835\n\xb4{'
+============================
+Mensaje descifrado: b'Hola, esto es un mensaje secreto'</code></pre>
+                                <p>el codigo completo seria este en el archivo uno:</p>
+                                <pre><code>
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+                                    
+# Generar una clave RSA
+private_key = rsa.generate_private_key(
+     public_exponent=65537,
+     key_size=2048,
+     backend=default_backend()
+                                    )
+                                    
+# Obtener la clave pública
+public_key = private_key.public_key()
+                                    
+# Convertir las claves a formato PEM
+pem_private_key = private_key.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.NoEncryption()
+                                    )
+                                    
+pem_public_key = public_key.public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                                    )
+                                    
+# Guardar las claves en archivos
+with open("private_key.pem", "wb") as private_key_file:
+    private_key_file.write(pem_private_key)
+                                    
+with open("public_key.pem", "wb") as public_key_file:
+    public_key_file.write(pem_public_key)
+                                    </code></pre>
+                                    <p>y este en el segundo:</p>
+                                    <pre><code>
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+                                        
+                                        
+                                        
+# Cargar las claves desde archivos
+with open("private_key.pem", "rb") as private_key_file:
+    private_key = serialization.load_pem_private_key(
+    private_key_file.read(),
+    password=None,
+    backend=default_backend()
+                                            )
+                                        
+with open("public_key.pem", "rb") as public_key_file:
+    public_key = serialization.load_pem_public_key(
+        public_key_file.read(),
+        backend=default_backend()
+                                            )
+                                        
+# Datos a cifrar
+mensaje = b"Hola, esto es un mensaje secreto"
+                                        
+# Cifrar con clave pública
+ciphertext = public_key.encrypt(
+    mensaje,
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+                                            )
+                                        )
+                                        
+# Descifrar con clave privada
+plaintext = private_key.decrypt(
+    ciphertext,
+    padding.OAEP(
+    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+    algorithm=hashes.SHA256(),
+    label=None
+                                            )
+                                        )
+                                        
+print("Mensaje original:", mensaje)
+print("============================")
+print("mensaje encriptado", ciphertext)
+print("============================")
+print("Mensaje descifrado:", plaintext)
+                                        </code></pre>
+                                <p>
+
+                                    por cierto, les enseñe lo que era xor, ibamos a implementar un sub-modulo llamado fernet, pero ya no lo use, y no esta de mas un repasito. 
+                                                GRACIAS!
+                                    
+                                    </p>
+                                    <img src="OIP.jpg" alt="GRAAXIAS">
+
+</body>
+                                
+
+
+
+
+
+
+
+
+
+
+
+
